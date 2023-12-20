@@ -1,3 +1,4 @@
+import math
 import cv2
 import numpy as np
 import cvzone
@@ -5,14 +6,14 @@ from cvzone.ColorModule import ColorFinder
 import tkinter as tk
 from tkinter import simpledialog, filedialog
 
-# Function to get video speed from user using a GUI window
+# Function to get video speed from the user using a GUI window
 def get_video_speed():
     root = tk.Tk()
     root.withdraw()
     speed = simpledialog.askfloat("Video Speed", "Enter video speed (e.g., 0.5 for half speed):", minvalue=0.1, maxvalue=2.0)
     return speed
 
-# Function to get video file path from user using a file dialog
+# Function to get the video file path from the user using a file dialog
 def get_video_path():
     root = tk.Tk()
     root.withdraw()
@@ -22,7 +23,7 @@ def get_video_path():
 # Get video speed from the user
 video_speed = get_video_speed()
 
-# Get video file path from the user or use the default path
+# Get the video file path from the user or use the default path
 video_path = get_video_path()
 if not video_path:
     video_path = 'Videos/vid (4).mp4'
@@ -43,7 +44,7 @@ def find_basketball_center(frame):
     # Convert the frame to the HSV color space
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-    # Define the range of orange color in HSV
+    # Define the range of the orange color in HSV
     lower_orange = np.array([10, 100, 100])
     upper_orange = np.array([20, 255, 255])
 
@@ -90,7 +91,7 @@ while True:
     # Find the Basketball Center
     basketball_center = find_basketball_center(img)
 
-    # Use constant hoop position
+    # Use the constant hoop position
     hoop_position = hoop_position_constant
 
     if basketball_center is not None and hoop_position is not None:
@@ -113,6 +114,11 @@ while True:
             y = int(A * x ** 2 + B * x + C)
             cv2.circle(img, (x, y), 2, (255, 0, 255), cv2.FILLED)
 
+        # Draw the trajectory line outside the loop after the initial prediction
+        if len(posListX) >= 2:
+            for x in range(len(posListX) - 1):
+                cv2.line(img, (posListX[x], posListY[x]), (posListX[x + 1], posListY[x + 1]), (0, 255, 0), 2)
+
         if len(posListX) < 10:
             # Prediction
             # X values 330 to 430  Y 590
@@ -120,18 +126,21 @@ while True:
             b = B
             c = C - hoop_position[1]
 
-            x = int((-b - np.sqrt(b ** 2 - (4 * a * c))) / (2 * a))
+            if not math.isnan(-b - np.sqrt(b ** 2 - (4 * a * c))) / (2 * a):
+                x = int((-b - np.sqrt(b ** 2 - (4 * a * c))) / (2 * a))
             prediction = 330 < x < 430
-
-        if prediction:
-            cvzone.putTextRect(img, "Basket", (50, 150),
-                               scale=5, thickness=5, colorR=(0, 200, 0), offset=20)
-        else:
-            cvzone.putTextRect(img, "No Basket", (50, 150),
-                               scale=5, thickness=5, colorR=(0, 0, 200), offset=20)
 
     # Display
     img = cv2.resize(img, (0, 0), None, 0.7, 0.7)
+
+    # Draw the text outside the loop after the initial prediction
+    if prediction:
+        cvzone.putTextRect(img, "Basket", (50, 150),
+                           scale=5, thickness=5, colorR=(0, 200, 0), offset=20)
+    else:
+        cvzone.putTextRect(img, "No Basket", (50, 150),
+                           scale=5, thickness=5, colorR=(0, 0, 200), offset=20)
+
     cv2.imshow("Image", img)
 
     # Check if the space bar is pressed
