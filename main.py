@@ -11,6 +11,8 @@ def get_video_speed():
     root = tk.Tk()
     root.withdraw()
     speed = simpledialog.askfloat("Video Speed", "Enter video speed (e.g., 0.5 for half speed):", minvalue=0.1, maxvalue=2.0)
+    if not None:
+        speed = 1
     return speed
 
 # Function to get the video file path from the user using a file dialog
